@@ -129,7 +129,7 @@
   .dup-row:first-child{border-top:none;}
   .dup-row .meta{color:var(--slate);}
 
-  .toolbar{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:11px;}
+  .toolbar{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:11px;align-items:center;}
   .btn-secondary{font-family:'Inter',sans-serif;font-weight:600;font-size:12px;background:var(--white);color:var(--navy-2);border:1px solid var(--line);border-radius:5px;padding:8px 13px;cursor:pointer;transition:.15s;text-decoration:none;display:inline-flex;align-items:center;gap:6px;}
   .btn-secondary:hover{border-color:var(--navy-2);background:var(--line-soft);}
   .missing-list{background:var(--white);border:1px solid var(--line);border-radius:6px;padding:4px 16px;}
@@ -164,7 +164,8 @@
   .urgent-toggle-btn{font-family:'Inter',sans-serif;font-size:12px;border:1px solid var(--line);background:var(--white);color:var(--slate);border-radius:20px;padding:3px 9px;cursor:pointer;transition:.15s;line-height:1.4;}
   .urgent-toggle-btn:hover{border-color:var(--red);color:var(--red);}
   .urgent-toggle-btn.active{background:var(--red);border-color:var(--red);color:#fff;}
-  .alerte-pill{font-size:11px;font-weight:600;padding:3px 9px;border-radius:20px;white-space:nowrap;}
+  .alerte-pill{display:inline-flex;align-items:center;justify-content:center;gap:6px;font-size:11px;font-weight:600;padding:5px 11px;border-radius:20px;white-space:nowrap;line-height:1;}
+  .pill-dot{width:7px;height:7px;flex:0 0 7px;border-radius:50%;display:inline-block;}
   .alerte-pill.ok{background:var(--green-light);color:var(--green);}
   .alerte-pill.warn{background:var(--orange-light);color:var(--orange);}
   .att-select{font-family:'Inter',sans-serif;font-size:12px;border:1px solid var(--line);border-radius:4px;padding:5px 7px;background:var(--white);}
@@ -258,7 +259,7 @@
   footer{text-align:center;font-size:11px;color:var(--slate-light);padding:20px;font-family:'IBM Plex Mono',monospace;}
 
   /* Modales communes */
-  .modal-overlay{display:none;position:fixed;inset:0;background:rgba(15,22,40,.5);z-index:100;align-items:center;justify-content:center;padding:20px;}
+  .modal-overlay{display:none;position:fixed;inset:0;background:rgba(15,22,40,.5);z-index:5000;align-items:center;justify-content:center;padding:20px;}
   .modal-overlay.open{display:flex;}
   .modal-box{background:var(--white);border-radius:10px;max-width:500px;width:100%;max-height:90vh;display:flex;flex-direction:column;overflow:hidden;box-shadow:0 16px 48px rgba(0,0,0,.22);}
   .modal-box.wide{max-width:640px;}
@@ -402,9 +403,9 @@
 
 <nav class="tab-nav">
   <div class="tab-nav-inner" id="tab-nav-inner">
-    <button class="tab-btn" data-statut-filter="QUALIFIER">Qualifier</button>
+    <button class="tab-btn" data-statut-filter="QUALIFIER">Qualifié</button>
     <button class="tab-btn" data-statut-filter="PRE-PLANIFIER">Pré-planifié</button>
-    <button class="tab-btn" data-statut-filter="PLANIFIER">Planifier</button>
+    <button class="tab-btn" data-statut-filter="PLANIFIER">Planifié</button>
     <button class="tab-btn" data-statut-filter="VALIDE">Validé</button>
     <button class="tab-btn" data-target="relances-section">Relance</button>
     <button class="tab-btn" data-target="alerts-duplicate-section">Doublons</button>
@@ -481,7 +482,7 @@
         <option value="periodeDemandeeDebut">Trier par : date demande d'arrêté</option>
         <option value="arreteRecuLe">Trier par : date arrêté reçu</option>
         <option value="ville">Trier par : ville (A → Z)</option>
-        <option value="statut">Trier par : statut (Qualifier → Validé)</option>
+        <option value="statut">Trier par : statut (Qualifié → Validé)</option>
       </select>
       <button class="btn-secondary" id="btn-sort-dir" title="Inverser le sens du tri">↓ Croissant</button>
       <button class="btn-secondary" id="btn-export-global">⬇️ Export Excel complet (tous les dossiers)</button>
@@ -547,10 +548,10 @@
     <div class="section-head"><h2>🗺️ Carte des dossiers</h2><span class="count" id="count-map">0</span></div>
     <p class="section-sub">Tous les dossiers en cours, positionnés par ville et colorés selon leur statut. Clique sur un point pour ouvrir le dossier. Fond de carte OpenStreetMap — gratuit, sans clé Google Maps.</p>
     <div class="toolbar">
-      <span class="alerte-pill ok" style="background:var(--pink-light);color:var(--pink);">● Qualifier</span>
-      <span class="alerte-pill ok" style="background:var(--amber-light);color:#8A6D1A;">● Pré-planifié</span>
-      <span class="alerte-pill ok" style="background:var(--orange-light);color:var(--orange);">● Planifier</span>
-      <span class="alerte-pill ok" style="background:var(--purple-light);color:var(--purple);">● Validé</span>
+      <span class="alerte-pill" style="background:var(--pink-light);color:var(--pink);"><span class="pill-dot" style="background:var(--pink);"></span>Qualifié</span>
+      <span class="alerte-pill" style="background:var(--amber-light);color:#8A6D1A;"><span class="pill-dot" style="background:#8A6D1A;"></span>Pré-planifié</span>
+      <span class="alerte-pill" style="background:var(--orange-light);color:var(--orange);"><span class="pill-dot" style="background:var(--orange);"></span>Planifié</span>
+      <span class="alerte-pill" style="background:var(--purple-light);color:var(--purple);"><span class="pill-dot" style="background:var(--purple);"></span>Validé</span>
       <button class="btn-secondary" id="btn-map-geocode">📍 Localiser les villes manquantes</button>
       <span id="map-geocode-status" style="font-size:11.5px;color:var(--slate);"></span>
     </div>
@@ -1232,7 +1233,7 @@ const STATUT_ORDER = ['', 'QUALIFIER', 'PRE-PLANIFIER', 'PLANIFIER', 'VALIDE'];
 function advanceStatut(obj){
   let target = 'QUALIFIER';
   if (obj.arreteStatut === 'En attente' || obj.arreteStatut === 'Envoyé') target = 'PRE-PLANIFIER';
-  if (obj.arreteNA) target = 'PLANIFIER'; // arrêté non nécessaire → passe directement en Planifier
+  if (obj.arreteNA) target = 'PLANIFIER'; // arrêté non nécessaire → passe directement en Planifié
   if (obj.arreteRecuLe) target = 'PLANIFIER';
   if (obj.attStatut === 'EnAttentePhotos' || obj.attStatut === 'Fait') target = 'VALIDE';
   const curIdx = STATUT_ORDER.indexOf(obj.statut || '');
@@ -1388,9 +1389,9 @@ function renderKPIs(computed){
 
   const kpis = [
     {num: active.length, lbl:"En cours", cls:""},
-    {num: byStatut["QUALIFIER"]||0, lbl:"Qualifier", cls:""},
-    {num: byStatut["PRE-PLANIFIER"]||0, lbl:"Pré-planifier", cls:""},
-    {num: byStatut["PLANIFIER"]||0, lbl:"Planifier", cls:""},
+    {num: byStatut["QUALIFIER"]||0, lbl:"Qualifié", cls:""},
+    {num: byStatut["PRE-PLANIFIER"]||0, lbl:"Pré-planifié", cls:""},
+    {num: byStatut["PLANIFIER"]||0, lbl:"Planifié", cls:""},
     {num: byStatut["VALIDE"]||0, lbl:"Validé", cls:"ok"},
     {num: nbPv+nbAr, lbl:"Relances à faire", cls:"accent"},
     {num: nbDup, lbl:"Doublons", cls:"accent"},
@@ -1443,7 +1444,7 @@ function renderDuplicates(){
   container.innerHTML = groups.map(g=>`
     <div class="alert-card type-duplicate">
       <div class="alert-card-top"><span class="nd-badge">${g[0].nd}</span><span class="alert-tag">${g.length} occurrences</span></div>
-      ${g.map(i=>`<div class="dup-row"><span>${i.ville||'ville non renseignée'} <span class="meta">— ${i.statut||'statut vide'}${i.archived?' — archivé':''}</span></span>
+      ${g.map(i=>`<div class="dup-row"><span>${i.ville||'ville non renseignée'} <span class="meta">— ${i.statut?statutLabel(i.statut):'statut vide'}${i.archived?' — archivé':''}</span></span>
         <button class="btn-mini red" data-action="delete" data-id="${i.id}">Supprimer</button></div>`).join("")}
     </div>`).join("");
 }
@@ -1872,13 +1873,15 @@ function renderFilters(){
   const curS = fs.value, curV = fv.value;
   const active = scoped().filter(i=>!i.archived);
   const statuts = [...new Set(active.map(i=>i.statut||"(vide)"))].sort();
-  fs.innerHTML = `<option value="">Tous les statuts</option>` + statuts.map(s=>`<option value="${s}">${s}</option>`).join("");
+  fs.innerHTML = `<option value="">Tous les statuts</option>` + statuts.map(s=>`<option value="${s}">${s==='(vide)'?'Statut vide':statutLabel(s)}</option>`).join("");
   const villes = [...new Set(active.map(i=>i.ville).filter(Boolean))].sort();
   fv.innerHTML = `<option value="">Toutes les villes</option>` + villes.map(v=>`<option value="${v}">${v}</option>`).join("");
   fs.value = curS; fv.value = curV;
 }
 
-function badgeHtml(statut){ const c = statut ? statut : 'empty'; return `<span class="badge badge-${c}">${statut||'—'}</span>`; }
+const STATUT_LABELS = {'':'—', 'QUALIFIER':'Qualifié', 'PRE-PLANIFIER':'Pré-planifié', 'PLANIFIER':'Planifié', 'VALIDE':'Validé'};
+function statutLabel(s){ return STATUT_LABELS[s||''] ?? (s||'—'); }
+function badgeHtml(statut){ const c = statut ? statut : 'empty'; return `<span class="badge badge-${c}">${statutLabel(statut)}</span>`; }
 function urgentBadgeHtml(){ return `<span class="badge badge-urgent">🔥 Urgent</span>`; }
 function urgentToggleBtnHtml(item){
   return `<button type="button" class="urgent-toggle-btn ${item.urgent?'active':''}" data-urgent-toggle="${item.id}" title="${item.urgent?"Retirer le marquage urgent":"Marquer ce dossier comme urgent"}">🔥 ${item.urgent?'Urgent':'Urgent ?'}</button>`;
@@ -2070,7 +2073,7 @@ function renderDossiersMap(){
     const marker = L.circleMarker([coord.lat, coord.lng], {
       radius: 8, color: '#fff', weight: 1.5, fillColor: statusMapColor(i.statut), fillOpacity: .9
     });
-    marker.bindPopup(`<b>${i.nd||'(sans numéro)'}</b><br>${i.ville||''}<br>${i.statut||'—'}`);
+    marker.bindPopup(`<b>${i.nd||'(sans numéro)'}</b><br>${i.ville||''}<br>${statutLabel(i.statut)}`);
     marker.on('click', ()=> openDetail(i.id));
     marker.addTo(dossiersMapMarkers);
   });
@@ -2345,13 +2348,13 @@ function openDetail(id){
         </select></div>
       <div class="field"><label>Ville</label><input data-f="ville" value="${item.ville||''}" list="villes-connues" autocomplete="off"></div>
       <div class="field"><label>Date cible</label><input type="date" data-f="dateCible" value="${item.dateCible||''}"></div>
-      <label class="na-check"><input type="checkbox" id="no-pv-arrete" ${(item.prescriptionNA && item.arreteNA)?'checked':''}> Ce dossier n'a besoin ni de PV ni de demande d'arrêté → passe directement en Planifier</label>
+      <label class="na-check"><input type="checkbox" id="no-pv-arrete" ${(item.prescriptionNA && item.arreteNA)?'checked':''}> Ce dossier n'a besoin ni de PV ni de demande d'arrêté → passe directement en Planifié</label>
       <div class="field"><label>Statut <span class="field-optional">(mis à jour automatiquement, modifiable si besoin)</span></label>
         <select data-f="statut">
           <option value="" ${item.statut===''?'selected':''}>—</option>
-          <option value="QUALIFIER" ${item.statut==='QUALIFIER'?'selected':''}>Qualifier</option>
-          <option value="PRE-PLANIFIER" ${item.statut==='PRE-PLANIFIER'?'selected':''}>Pré-planifier</option>
-          <option value="PLANIFIER" ${item.statut==='PLANIFIER'?'selected':''}>Planifier</option>
+          <option value="QUALIFIER" ${item.statut==='QUALIFIER'?'selected':''}>Qualifié</option>
+          <option value="PRE-PLANIFIER" ${item.statut==='PRE-PLANIFIER'?'selected':''}>Pré-planifié</option>
+          <option value="PLANIFIER" ${item.statut==='PLANIFIER'?'selected':''}>Planifié</option>
           <option value="VALIDE" ${item.statut==='VALIDE'?'selected':''}>Validé</option>
         </select></div>
       <div class="dup-warning" id="dup-warning"></div>
@@ -2524,7 +2527,7 @@ const wizardSteps = [
            {f:'client', type:'select', label:'Client', options:[['','Non classé'], ...CLIENTS.map(c=>[c,c])]},
            {f:'ville', type:'text', label:'Ville', required:true, placeholder:'ex : BORDEAUX'},
            {f:'dateCible', type:'date', label:'Date cible'},
-           {f:'statut', type:'select', label:'Statut', options:[['','—'],['QUALIFIER','Qualifier'],['PRE-PLANIFIER','Pré-planifier'],['PLANIFIER','Planifier'],['VALIDE','Validé']]}]},
+           {f:'statut', type:'select', label:'Statut', options:[['','—'],['QUALIFIER','Qualifié'],['PRE-PLANIFIER','Pré-planifié'],['PLANIFIER','Planifié'],['VALIDE','Validé']]}]},
   {key:'prescription', label:'Étape 2 / 5', title:'Prescription (PV)', help:"L'alerte se déclenche 15 jours après la création du dossier — ou la dernière relance loguée — si le PV n'est pas encore reçu, pour penser à le demander à l'entreprise. Les relances se rajoutent ensuite depuis la fiche du dossier.", naField:'prescriptionNA',
    fields:[{f:'prescriptionEnAttente', type:'checkbox', label:'En attente de prescription'}, {f:'prescriptionRecueLe', type:'date', label:'PV reçu le'}]},
   {key:'arrete', label:'Étape 3 / 5', title:"Demande d'arrêté", help:"La relance automatique apparaît 1 semaine avant la date de début demandée à la mairie, tant que l'arrêté n'est pas encore reçu.", naField:'arreteNA',
@@ -2595,7 +2598,7 @@ function checkDupWarning(nd){
   const warn = document.getElementById('dup-warning'); const key = normND(nd);
   if(!key){ warn.classList.remove('show'); return; }
   const existing = items.find(i=>normND(i.nd)===key);
-  if(existing){ warn.textContent = `⚠️ Ce numéro existe déjà (${existing.ville||'ville non renseignée'} — ${existing.statut||'statut vide'}).`; warn.classList.add('show'); }
+  if(existing){ warn.textContent = `⚠️ Ce numéro existe déjà (${existing.ville||'ville non renseignée'} — ${existing.statut?statutLabel(existing.statut):'statut vide'}).`; warn.classList.add('show'); }
   else warn.classList.remove('show');
 }
 
@@ -3022,7 +3025,7 @@ document.getElementById('btn-export-global').addEventListener('click', ()=>{
     const pv = i.prescriptionNA ? 'Non nécessaire' : (i.prescriptionRecueLe ? 'Reçu' : (i.prescriptionEnAttente ? 'En attente' : '—'));
     const dict = i.dictNA ? 'Non nécessaire' : (i.dictDateLe ? fmtISO(parseISO(i.dictDateLe)) : '—');
     return [
-      i.nd||'', i.client||'Non classé', i.ville||'', i.statut||'', i.dateCreation?fmtISO(parseISO(i.dateCreation)):'',
+      i.nd||'', i.client||'Non classé', i.ville||'', statutLabel(i.statut), i.dateCreation?fmtISO(parseISO(i.dateCreation)):'',
       i.dateCible?fmtISO(parseISO(i.dateCible)):'', pv, i.prescriptionRecueLe?fmtISO(parseISO(i.prescriptionRecueLe)):'',
       i.arreteNA?'Non nécessaire':(i.arreteStatut||'—'), i.arreteEnvoyeLe?fmtISO(parseISO(i.arreteEnvoyeLe)):'',
       i.periodeDemandeeDebut?fmtISO(parseISO(i.periodeDemandeeDebut)):'', i.periodeDemandeeFin?fmtISO(parseISO(i.periodeDemandeeFin)):'',
