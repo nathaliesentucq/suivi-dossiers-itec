@@ -50,7 +50,7 @@
   .backup-btn{margin-top:6px;margin-right:6px;font-family:'Inter',sans-serif;font-size:11px;font-weight:600;background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.2);color:#EAF0F8;border-radius:5px;padding:6px 10px;cursor:pointer;}
   .backup-btn:hover{background:rgba(255,255,255,.16);}
 
-  .kpi-row{display:grid;grid-template-columns:repeat(9,1fr);gap:9px;margin-top:18px;}
+  .kpi-row{display:grid;grid-template-columns:repeat(8,1fr);gap:9px;margin-top:18px;}
   .client-tabs{display:flex;gap:8px;margin-top:16px;flex-wrap:wrap;}
   .client-tab{background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.16);color:#C3D0E2;font-family:'Inter',sans-serif;font-weight:600;font-size:13px;padding:9px 16px;border-radius:6px;cursor:pointer;transition:.15s;}
   .client-tab:hover{background:rgba(255,255,255,.12);}
@@ -337,6 +337,26 @@
   .courrier-tpl-card textarea, .courrier-tpl-card input[type=text]{width:100%;font-family:'Inter',sans-serif;font-size:12.5px;border:1px solid var(--line);background:var(--paper);color:var(--ink);border-radius:5px;padding:8px 10px;resize:vertical;}
   .courrier-tpl-card textarea:focus, .courrier-tpl-card input[type=text]:focus{outline:2px solid var(--navy-2);outline-offset:0;border-color:var(--navy-2);}
   .courrier-tpl-hint{font-size:11px;color:var(--slate-light);margin:-4px 0 10px;}
+  .param-subtab.active{background:var(--navy-2);color:#fff;border-color:var(--navy-2);}
+  .stats-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(420px,1fr));gap:14px;}
+  .stats-card{background:var(--white);border:1px solid var(--line);border-radius:8px;padding:14px 16px;}
+  .stats-card h4{font-family:'Barlow Condensed',sans-serif;font-size:14px;text-transform:uppercase;letter-spacing:.03em;color:var(--navy);margin:0 0 10px;}
+  .stats-card canvas{max-height:260px;}
+  .leaflet-popup-content b{font-family:'IBM Plex Mono',monospace;}
+
+  /* ---- petites animations ---- */
+  .modal-overlay .modal-box{transform:scale(.96) translateY(6px);opacity:0;transition:transform .18s ease-out,opacity .18s ease-out;}
+  .modal-overlay.open .modal-box{transform:scale(1) translateY(0);opacity:1;}
+  tr[data-id]{transition:background-color .5s ease;}
+  tr.row-flash{background-color:var(--green-light)!important;}
+  .badge{transition:background-color .3s ease,color .3s ease;}
+  .kpi .num{transition:color .3s ease;}
+  .client-tab, .tab-btn, .btn-secondary, .btn-mini, .btn-primary{transition:background-color .15s ease,color .15s ease,border-color .15s ease,transform .1s ease;}
+  .btn-primary:active, .btn-secondary:active, .btn-mini:active{transform:scale(.96);}
+  .alert-card{animation:fadeSlideIn .25s ease-out;}
+  @keyframes fadeSlideIn{from{opacity:0;transform:translateY(4px);}to{opacity:1;transform:translateY(0);}}
+  .save-indicator.show{animation:popIn .2s ease-out;}
+  @keyframes popIn{from{transform:scale(.85);}to{transform:scale(1);}}
 
   @media (max-width:900px){
     .kpi-row{grid-template-columns:repeat(2,1fr);}
@@ -346,6 +366,8 @@
 </style>
 </head>
 <body>
+
+<datalist id="villes-connues"></datalist>
 
 <div class="hero">
   <div class="hero-top">
@@ -364,7 +386,10 @@
       <input type="text" id="quick-search" placeholder="🔎 Recherche urgente — n° dossier ou ville, tous clients" autocomplete="off">
       <div class="quick-search-results" id="quick-search-results"></div>
     </div>
-    <div class="hero-date"><b id="today-label"></b><span>Mis à jour en direct</span></div>
+    <div style="display:flex;flex-direction:column;align-items:flex-end;gap:7px;">
+      <button class="backup-btn" id="btn-open-parametres" type="button">⚙️ Paramètres</button>
+      <div class="hero-date"><b id="today-label"></b><span>Mis à jour en direct</span></div>
+    </div>
   </div>
   <div class="kpi-row" id="kpi-row"></div>
   <div class="client-tabs" id="client-tabs"></div>
@@ -380,7 +405,8 @@
     <button class="tab-btn" data-target="alerts-duplicate-section">Doublons</button>
     <button class="tab-btn" data-statut-filter="">En cours</button>
     <button class="tab-btn" data-target="archive-section">Archives</button>
-    <button class="tab-btn" data-target="courrier-templates-section">✉️ Courriers</button>
+    <button class="tab-btn" data-target="map-section">🗺️ Carte</button>
+    <button class="tab-btn" data-target="stats-section">📊 Statistiques</button>
     <span class="sync-status"><span class="sync-dot"></span><span id="sync-label">Partagé — synchro en direct</span></span>
   </div>
 </nav>
@@ -436,7 +462,6 @@
       <select class="filter" id="filter-ville"></select>
       <select class="filter" id="filter-flag">
         <option value="">Tous les dossiers</option>
-        <option value="urgent">🔥 Urgent</option>
         <option value="none">Sans alerte ni anomalie</option>
         <option value="anomaly">Avec anomalie</option>
         <option value="relance-pv">Relance PV</option>
@@ -448,15 +473,23 @@
         <option value="suivi">Trier par : suivi (échéance la plus proche)</option>
         <option value="dateCible">Trier par : date cible</option>
         <option value="dateCreation">Trier par : créé le</option>
+        <option value="periodeDemandeeDebut">Trier par : date demande d'arrêté</option>
+        <option value="arreteRecuLe">Trier par : date arrêté reçu</option>
         <option value="ville">Trier par : ville (A → Z)</option>
         <option value="statut">Trier par : statut (Qualifier → Validé)</option>
       </select>
+      <button class="btn-secondary" id="btn-sort-dir" title="Inverser le sens du tri">↓ Croissant</button>
       <button class="btn-secondary" id="btn-export-global">⬇️ Export Excel complet (tous les dossiers)</button>
     </div>
 
     <div class="table-wrap">
       <table>
-        <thead><tr><th>N° Dossier</th><th>Statut</th><th>Ville</th><th>Créé le</th><th>Date cible</th><th>Échéance</th><th>Suivi</th><th>Alerte</th><th>Commentaire</th><th>Attachement</th><th></th></tr></thead>
+        <thead><tr>
+          <th>N° Dossier</th><th>Statut</th><th>Ville</th>
+          <th class="th-sort" data-sort-col="dateCreation" style="cursor:pointer;" title="Trier par date de création">Créé le ⇅</th>
+          <th class="th-sort" data-sort-col="dateCible" style="cursor:pointer;" title="Trier par date cible">Date cible ⇅</th>
+          <th>Échéance</th><th>Suivi</th><th>Alerte</th><th>Commentaire</th><th>Attachement</th><th></th>
+        </tr></thead>
         <tbody id="table-body"></tbody>
       </table>
     </div>
@@ -499,14 +532,73 @@
     </div>
   </section>
 
-  <section id="courrier-templates-section">
-    <div class="section-head"><h2>Modèles de courrier</h2></div>
-    <p class="section-sub">Modifie ici les textes utilisés dans les courriers générés automatiquement (Bernard, mairie, Foued, demande initiale). Les zones entre doubles accolades, ex. <code>{{nd}}</code>, sont remplacées automatiquement par les informations du dossier concerné — ne les supprime pas si tu veux garder l'information à cet endroit.</p>
-    <div class="field" style="max-width:360px;">
-      <label>Adresse e-mail de contact <span class="field-optional">(utilisée dans le courrier de demande initiale)</span></label>
-      <input type="text" id="courrier-tpl-email">
+  <section id="map-section">
+    <div class="section-head"><h2>🗺️ Carte des dossiers</h2><span class="count" id="count-map">0</span></div>
+    <p class="section-sub">Tous les dossiers en cours, positionnés par ville et colorés selon leur statut. Clique sur un point pour ouvrir le dossier. Fond de carte OpenStreetMap — gratuit, sans clé Google Maps.</p>
+    <div class="toolbar">
+      <span class="alerte-pill ok" style="background:var(--pink-light);color:var(--pink);">● Qualifier</span>
+      <span class="alerte-pill ok" style="background:var(--amber-light);color:#8A6D1A;">● Pré-planifié</span>
+      <span class="alerte-pill ok" style="background:var(--orange-light);color:var(--orange);">● Planifier</span>
+      <span class="alerte-pill ok" style="background:var(--purple-light);color:var(--purple);">● Validé</span>
+      <button class="btn-secondary" id="btn-map-geocode">📍 Localiser les villes manquantes</button>
+      <span id="map-geocode-status" style="font-size:11.5px;color:var(--slate);"></span>
     </div>
-    <div id="courrier-templates-body"></div>
+    <div id="dossiers-map" style="height:520px;border:1px solid var(--line);border-radius:6px;background:var(--line-soft);"></div>
+  </section>
+
+  <section id="stats-section">
+    <div class="section-head"><h2>📊 Tableaux de bord</h2></div>
+    <p class="section-sub">Vue d'ensemble pour les bilans — temps de traitement, retards, charge par équipe.</p>
+    <div class="stats-grid">
+      <div class="stats-card">
+        <h4>Temps de traitement moyen par mois (jours, création → clôture)</h4>
+        <canvas id="chart-duree"></canvas>
+      </div>
+      <div class="stats-card">
+        <h4>Dossiers en retard — par ville</h4>
+        <canvas id="chart-retard-ville"></canvas>
+      </div>
+      <div class="stats-card">
+        <h4>Répartition des dossiers en cours par client</h4>
+        <canvas id="chart-client"></canvas>
+      </div>
+      <div class="stats-card">
+        <h4>Charge de travail par équipe (jours de chantier planifiés)</h4>
+        <canvas id="chart-equipe"></canvas>
+      </div>
+    </div>
+  </section>
+
+  <section id="parametres-section">
+    <div class="section-head"><h2>⚙️ Paramètres</h2></div>
+    <div class="toolbar">
+      <button type="button" class="btn-secondary param-subtab active" data-param-tab="courriers">✉️ Courriers</button>
+      <button type="button" class="btn-secondary param-subtab" data-param-tab="entreprises">🏢 Entreprises</button>
+    </div>
+
+    <div id="param-courriers" class="param-panel">
+      <p class="section-sub">Modifie ici les textes utilisés dans les courriers générés automatiquement (Bernard, mairie, Foued, demande initiale). Les zones entre doubles accolades, ex. <code>{{nd}}</code>, sont remplacées automatiquement par les informations du dossier concerné — ne les supprime pas si tu veux garder l'information à cet endroit.</p>
+      <div class="field" style="max-width:360px;">
+        <label>Adresse e-mail de contact <span class="field-optional">(utilisée dans le courrier de demande initiale)</span></label>
+        <input type="text" id="courrier-tpl-email">
+      </div>
+      <div id="courrier-templates-body"></div>
+    </div>
+
+    <div id="param-entreprises" class="param-panel" style="display:none;">
+      <p class="section-sub">Ajoute, modifie ou supprime les entreprises (clients). Chaque entreprise a son propre onglet de dossiers sur la page principale.</p>
+      <div class="courrier-tpl-card">
+        <h4>Ajouter une nouvelle entreprise</h4>
+        <div class="field">
+          <label>Nom de l'entreprise</label>
+          <div style="display:flex;gap:8px;">
+            <input type="text" id="new-entreprise-name" placeholder="ex : SOGETREL">
+            <button type="button" class="btn-primary" id="btn-add-entreprise">Ajouter</button>
+          </div>
+        </div>
+      </div>
+      <div id="entreprises-list"></div>
+    </div>
   </section>
 
 </main>
@@ -557,7 +649,10 @@
   </div>
 </div>
 
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4"></script>
 <script>
 // ===== Connexion au stockage partage (Supabase) =====
 // Remplace les deux valeurs ci-dessous par celles de ton projet Supabase
@@ -913,8 +1008,11 @@ async function init(){
   await loadTechnicians();
   await loadTeamWeek();
   await loadClients();
+  await loadClientInfo();
+  await loadCityCoords();
   await loadCourrierTemplates();
   renderCourrierTemplatesTab();
+  renderEntreprisesList();
   renderAll();
   startSync();
 }
@@ -950,6 +1048,116 @@ async function loadClients(){
   }catch(e){ /* on garde la liste par défaut */ }
 }
 function persistClients(){ persistAuxKey(CLIENTS_KEY, JSON.stringify(CLIENTS)); }
+
+// ================= Fiche entreprise (fournisseur, logiciel) =================
+const CLIENT_INFO_KEY = "client_info_v1";
+let CLIENT_INFO = {}; // { [nomEntreprise]: {fournisseur:'', logiciel:''} }
+async function loadClientInfo(){
+  try{
+    const personal = await readWithRetry(false, 2, CLIENT_INFO_KEY);
+    if (personal.ok && personal.value){ CLIENT_INFO = JSON.parse(personal.value); return; }
+    const shared = await readWithRetry(true, 2, CLIENT_INFO_KEY);
+    if (shared.ok && shared.value){ CLIENT_INFO = JSON.parse(shared.value); return; }
+  }catch(e){ /* on garde vide */ }
+}
+function persistClientInfo(){ persistAuxKey(CLIENT_INFO_KEY, JSON.stringify(CLIENT_INFO)); }
+
+let deleteConfirmClientPending = null;
+function renderEntreprisesList(){
+  const wrap = document.getElementById('entreprises-list');
+  if (!wrap) return;
+  wrap.innerHTML = CLIENTS.length ? CLIENTS.map(c=>{
+    const info = CLIENT_INFO[c] || {};
+    const n = items.filter(i=>(i.client||'')===c).length;
+    const pending = deleteConfirmClientPending === c;
+    return `<div class="courrier-tpl-card">
+      <h4>${c} <span class="count" style="margin-left:8px;">${n} dossier(s)</span></h4>
+      <div class="field"><label>Fournisseur</label>
+        <select data-client-info="${c}" data-info-field="fournisseur">
+          <option value="" ${!info.fournisseur?'selected':''}>—</option>
+          <option value="Orange" ${info.fournisseur==='Orange'?'selected':''}>Orange</option>
+          <option value="Bouygues" ${info.fournisseur==='Bouygues'?'selected':''}>Bouygues</option>
+          <option value="Autre" ${info.fournisseur==='Autre'?'selected':''}>Autre</option>
+        </select>
+      </div>
+      <div class="field"><label>Logiciel</label>
+        <select data-client-info="${c}" data-info-field="logiciel">
+          <option value="" ${!info.logiciel?'selected':''}>—</option>
+          <option value="Praxedo" ${info.logiciel==='Praxedo'?'selected':''}>Praxedo</option>
+          <option value="Kraaft" ${info.logiciel==='Kraaft'?'selected':''}>Kraaft</option>
+          <option value="Sans" ${info.logiciel==='Sans'?'selected':''}>Sans logiciel</option>
+          <option value="Autre" ${info.logiciel==='Autre'?'selected':''}>Autre</option>
+        </select>
+      </div>
+      <div class="toolbar" style="margin-top:4px;margin-bottom:0;">
+        ${pending
+          ? `<span style="color:var(--red);font-weight:700;font-size:12px;">⚠️ Attention, cette action est définitive.</span>
+             <button type="button" class="btn-mini red" data-confirm-delete-client="${c}">Oui, supprimer « ${c} »</button>
+             <button type="button" class="btn-mini" data-cancel-delete-client="1">Annuler</button>`
+          : `<button type="button" class="btn-mini red" data-ask-delete-client="${c}">🗑️ Supprimer cette entreprise</button>`}
+      </div>
+    </div>`;
+  }).join("") : `<p class="empty-note">Aucune entreprise pour l'instant.</p>`;
+
+  wrap.querySelectorAll('[data-client-info]').forEach(el=>{
+    el.addEventListener('change', ()=>{
+      const c = el.dataset.clientInfo, f = el.dataset.infoField;
+      CLIENT_INFO[c] = CLIENT_INFO[c] || {};
+      CLIENT_INFO[c][f] = el.value;
+      persistClientInfo();
+    });
+  });
+  wrap.querySelectorAll('[data-ask-delete-client]').forEach(btn=>{
+    btn.addEventListener('click', ()=>{ deleteConfirmClientPending = btn.dataset.askDeleteClient; renderEntreprisesList(); });
+  });
+  wrap.querySelectorAll('[data-cancel-delete-client]').forEach(btn=>{
+    btn.addEventListener('click', ()=>{ deleteConfirmClientPending = null; renderEntreprisesList(); });
+  });
+  wrap.querySelectorAll('[data-confirm-delete-client]').forEach(btn=>{
+    btn.addEventListener('click', ()=>{
+      const c = btn.dataset.confirmDeleteClient;
+      if (!window.confirm(`Es-tu vraiment sûr(e) de vouloir supprimer définitivement l'entreprise « ${c} » ?\n\nLes dossiers déjà créés pour cette entreprise seront basculés vers « Non classé » (ils ne seront pas supprimés). Cette action est irréversible.`)) return;
+      items.forEach(i=>{ if ((i.client||'')===c) i.client=''; });
+      persist();
+      CLIENTS = CLIENTS.filter(x=>x!==c);
+      delete CLIENT_INFO[c];
+      persistClients(); persistClientInfo();
+      if (activeClient === c) activeClient = '';
+      deleteConfirmClientPending = null;
+      renderEntreprisesList();
+      renderAll();
+    });
+  });
+}
+document.getElementById('btn-add-entreprise').addEventListener('click', ()=>{
+  const input = document.getElementById('new-entreprise-name');
+  const name = input.value.trim();
+  if (!name) return;
+  const clean = name.toUpperCase();
+  if (!CLIENTS.includes(clean)){ CLIENTS.push(clean); persistClients(); }
+  input.value = '';
+  renderEntreprisesList();
+  renderClientTabs();
+});
+document.getElementById('new-entreprise-name').addEventListener('keydown', (e)=>{
+  if (e.key === 'Enter'){ e.preventDefault(); document.getElementById('btn-add-entreprise').click(); }
+});
+
+document.querySelectorAll('.param-subtab').forEach(btn=>{
+  btn.addEventListener('click', ()=>{
+    document.querySelectorAll('.param-subtab').forEach(b=>b.classList.remove('active'));
+    btn.classList.add('active');
+    const tab = btn.dataset.paramTab;
+    document.getElementById('param-courriers').style.display = tab==='courriers' ? '' : 'none';
+    document.getElementById('param-entreprises').style.display = tab==='entreprises' ? '' : 'none';
+    if (tab === 'entreprises') renderEntreprisesList();
+  });
+});
+document.getElementById('btn-open-parametres').addEventListener('click', ()=>{
+  const target = document.getElementById('parametres-section');
+  const y = target.getBoundingClientRect().top + window.scrollY - 56;
+  window.scrollTo({top:y, behavior:'smooth'});
+});
 
 // ================= Modèles de courrier (éditables) =================
 const COURRIER_TEMPLATES_KEY = "courrier_templates_v1";
@@ -1013,6 +1221,7 @@ const STATUT_ORDER = ['', 'QUALIFIER', 'PRE-PLANIFIER', 'PLANIFIER', 'VALIDE'];
 function advanceStatut(obj){
   let target = 'QUALIFIER';
   if (obj.arreteStatut === 'En attente' || obj.arreteStatut === 'Envoyé') target = 'PRE-PLANIFIER';
+  if (obj.arreteNA) target = 'PLANIFIER'; // arrêté non nécessaire → passe directement en Planifier
   if (obj.arreteRecuLe) target = 'PLANIFIER';
   if (obj.attStatut === 'EnAttentePhotos' || obj.attStatut === 'Fait') target = 'VALIDE';
   const curIdx = STATUT_ORDER.indexOf(obj.statut || '');
@@ -1023,6 +1232,7 @@ function advanceStatut(obj){
 function computeStatutIgnoringAtt(obj){
   let target = 'QUALIFIER';
   if (obj.arreteStatut === 'En attente' || obj.arreteStatut === 'Envoyé') target = 'PRE-PLANIFIER';
+  if (obj.arreteNA) target = 'PLANIFIER';
   if (obj.arreteRecuLe) target = 'PLANIFIER';
   return target;
 }
@@ -1113,33 +1323,29 @@ function analyse(item, dupIds){
     flags.push({type:"anomaly", label:"DICT non renseignée", detail:"Une demande d'arrêté est en cours mais la DICT n'a ni date ni « non nécessaire » coché."});
   }
 
-  // Relance PV — 5 jours ouvrés (hors samedi/dimanche) ; 3 semaines pour les grandes villes, plus lentes à répondre
-  const BIG_CITIES = ['BORDEAUX','LIBOURNE'];
-  const isBigCity = BIG_CITIES.includes((item.ville||'').trim().toUpperCase());
+  // Relance PV — 15 jours après la création du dossier (ou la dernière relance loguée)
   if (!item.prescriptionNA && item.prescriptionEnAttente && !item.prescriptionRecueLe){
     const relances = item.prescriptionRelances||[];
     const ref = relances.length ? relances[relances.length-1] : item.dateCreation;
-    const j = isBigCity ? daysBetween(parseISO(ref), TODAY) : businessDaysBetween(parseISO(ref), TODAY);
-    const seuil = isBigCity ? 21 : 5;
-    const uniteLabel = isBigCity ? "j" : "j ouvrés";
+    const j = daysBetween(parseISO(ref), TODAY);
+    const seuil = 15;
     if (j >= seuil){
-      const detail = relances.length ? `Relancé ${relances.length} fois — dernière relance il y a ${j} ${uniteLabel}.` : `En attente de prescription depuis la création du dossier — pense à la demander à l'entreprise.`;
+      const detail = relances.length ? `Relancé ${relances.length} fois — dernière relance il y a ${j} j.` : `PV toujours pas reçu, 15 jours après la création du dossier — pense à le demander à l'entreprise.`;
       flags.push({type:"relance-pv", label:"PV à relancer", detail,
-        dateLabel: relances.length ? "Dernière relance" : "En attente depuis le",
-        dateVal: fmtISO(parseISO(ref)), jours: j, joursLabel: uniteLabel});
+        dateLabel: relances.length ? "Dernière relance" : "Dossier créé le",
+        dateVal: fmtISO(parseISO(ref)), jours: j, joursLabel: "j"});
     }
   }
 
-  // Relance arrêté (mairie) — 7 jours à partir de la date d'envoi ou de la dernière relance
-  if (!item.arreteNA && item.arreteStatut==='Envoyé' && item.arreteEnvoyeLe && !item.arreteRecuLe){
-    const relances = item.arreteRelances||[];
-    const ref = relances.length ? relances[relances.length-1] : item.arreteEnvoyeLe;
-    const j = daysBetween(parseISO(ref), TODAY);
-    if (j >= 7){
-      const detail = relances.length ? `Relancé ${relances.length} fois — dernière relance il y a ${j} j.` : `Toujours sans réponse de la mairie.`;
+  // Relance arrêté (mairie) — avertir 1 semaine avant la date de début demandée sur la demande d'arrêté, tant que l'arrêté n'est pas reçu
+  if (!item.arreteNA && item.arreteStatut==='Envoyé' && item.periodeDemandeeDebut && !item.arreteRecuLe){
+    const debut = parseISO(item.periodeDemandeeDebut);
+    const relanceDate = debut ? new Date(debut.getFullYear(), debut.getMonth(), debut.getDate()-7) : null;
+    if (relanceDate && TODAY >= relanceDate){
+      const j = daysBetween(relanceDate, TODAY);
+      const detail = `Les travaux demandés démarrent le ${fmtISO(debut)} — pense à relancer la mairie si l'arrêté n'est pas encore arrivé.`;
       flags.push({type:"relance-arrete", label:"Arrêté à relancer", detail,
-        dateLabel: relances.length ? "Dernière relance" : "Envoyé à la mairie le",
-        dateVal: fmtISO(parseISO(ref)), jours: j});
+        dateLabel: "À relancer depuis le", dateVal: fmtISO(relanceDate), jours: j});
     }
   }
 
@@ -1171,7 +1377,6 @@ function renderKPIs(computed){
 
   const kpis = [
     {num: active.length, lbl:"En cours", cls:""},
-    {num: active.filter(i=>i.urgent).length, lbl:"🔥 Urgent", cls:"accent"},
     {num: byStatut["QUALIFIER"]||0, lbl:"Qualifier", cls:""},
     {num: byStatut["PRE-PLANIFIER"]||0, lbl:"Pré-planifier", cls:""},
     {num: byStatut["PLANIFIER"]||0, lbl:"Planifier", cls:""},
@@ -1614,6 +1819,23 @@ function renderPlanning(){
   });
 }
 
+let sortDirState = 1; // 1 = croissant (plus ancien → plus récent), -1 = décroissant
+document.getElementById('btn-sort-dir').addEventListener('click', ()=>{
+  sortDirState = sortDirState === 1 ? -1 : 1;
+  document.getElementById('btn-sort-dir').textContent = sortDirState === 1 ? '↓ Croissant' : '↑ Décroissant';
+  renderTable(computeAll());
+});
+document.querySelectorAll('.th-sort').forEach(th=>{
+  th.addEventListener('click', ()=>{
+    const col = th.dataset.sortCol;
+    const sel = document.getElementById('sort-by');
+    if (sel.value === col){ sortDirState = sortDirState === 1 ? -1 : 1; }
+    else { sel.value = col; sortDirState = -1; } // clic sur une colonne : du plus récent au plus ancien par défaut
+    document.getElementById('btn-sort-dir').textContent = sortDirState === 1 ? '↓ Croissant' : '↑ Décroissant';
+    renderTable(computeAll());
+  });
+});
+
 function renderFilters(){
   const fs = document.getElementById('filter-statut'); const fv = document.getElementById('filter-ville');
   const curS = fs.value, curV = fv.value;
@@ -1677,6 +1899,7 @@ function renderTable(computed){
   const fv = document.getElementById('filter-ville').value;
   const ff = document.getElementById('filter-flag').value;
   const sortBy = document.getElementById('sort-by').value;
+  const sortDir = sortDirState; // 1 = croissant, -1 = décroissant
 
   const filtered = computed.filter(c=>{
     const i = c.item;
@@ -1691,12 +1914,15 @@ function renderTable(computed){
 
   filtered.sort((a,b)=>{
     const ia = a.item, ib = b.item;
-    if (sortBy === 'dateCible') return (ia.dateCible||'9999').localeCompare(ib.dateCible||'9999');
-    if (sortBy === 'dateCreation') return (ia.dateCreation||'9999').localeCompare(ib.dateCreation||'9999');
-    if (sortBy === 'ville') return (ia.ville||'').localeCompare(ib.ville||'', 'fr');
-    if (sortBy === 'statut') return STATUT_ORDER.indexOf(ia.statut||'') - STATUT_ORDER.indexOf(ib.statut||'');
-    // suivi : échéance la plus proche (la plus urgente) en premier
-    return (suiviEcheanceDate(ia)||'9999').localeCompare(suiviEcheanceDate(ib)||'9999');
+    let r;
+    if (sortBy === 'dateCible') r = (ia.dateCible||'9999').localeCompare(ib.dateCible||'9999');
+    else if (sortBy === 'dateCreation') r = (ia.dateCreation||'9999').localeCompare(ib.dateCreation||'9999');
+    else if (sortBy === 'periodeDemandeeDebut') r = (ia.periodeDemandeeDebut||'9999').localeCompare(ib.periodeDemandeeDebut||'9999');
+    else if (sortBy === 'arreteRecuLe') r = (ia.arreteRecuLe||'9999').localeCompare(ib.arreteRecuLe||'9999');
+    else if (sortBy === 'ville') r = (ia.ville||'').localeCompare(ib.ville||'', 'fr');
+    else if (sortBy === 'statut') r = STATUT_ORDER.indexOf(ia.statut||'') - STATUT_ORDER.indexOf(ib.statut||'');
+    else r = (suiviEcheanceDate(ia)||'9999').localeCompare(suiviEcheanceDate(ib)||'9999'); // suivi : échéance la plus proche en premier
+    return r * sortDir;
   });
 
   document.getElementById('count-total').textContent = `${filtered.length} / ${scoped().filter(i=>!i.archived).length}`;
@@ -1704,9 +1930,9 @@ function renderTable(computed){
   document.getElementById('table-body').innerHTML = filtered.map(c=>{
     const i = c.item;
     const isDup = c.flags.some(f=>f.type==="duplicate");
-    return `<tr class="st-${i.statut} ${isDup?'row-dup':''} ${i.urgent?'is-urgent':''}" data-id="${i.id}">
-      <td class="mono">${i.urgent?'🔥 ':''}${i.nd}</td>
-      <td>${badgeHtml(i.statut)} ${urgentToggleBtnHtml(i)}</td>
+    return `<tr class="st-${i.statut} ${isDup?'row-dup':''}" data-id="${i.id}">
+      <td class="mono">${i.nd}</td>
+      <td>${badgeHtml(i.statut)}</td>
       <td>${i.ville||'—'}</td>
       <td class="mono" style="font-size:11px;">${i.dateCreation?fmtISO(parseISO(i.dateCreation)):'—'}</td>
       <td>${i.dateCible?fmtISO(parseISO(i.dateCible)):'—'}</td>
@@ -1736,6 +1962,169 @@ function renderArchive(){
   }).join("") : `<tr><td colspan="7" class="empty-note">Aucun dossier archivé pour l'instant.</td></tr>`;
 }
 
+// ================= Carte des dossiers (Leaflet + OpenStreetMap, gratuit) =================
+const CITY_COORDS_KEY = "city_coords_v1";
+let CITY_COORDS = {}; // { "BORDEAUX": {lat, lng} }
+let dossiersMapInstance = null;
+let dossiersMapMarkers = null;
+
+async function loadCityCoords(){
+  try{
+    const personal = await readWithRetry(false, 2, CITY_COORDS_KEY);
+    if (personal.ok && personal.value){ CITY_COORDS = JSON.parse(personal.value); return; }
+    const shared = await readWithRetry(true, 2, CITY_COORDS_KEY);
+    if (shared.ok && shared.value){ CITY_COORDS = JSON.parse(shared.value); return; }
+  }catch(e){ /* on repartira d'une liste vide */ }
+}
+function persistCityCoords(){ persistAuxKey(CITY_COORDS_KEY, JSON.stringify(CITY_COORDS)); }
+function normVille(v){ return (v||'').trim().toUpperCase(); }
+
+async function geocodeOne(ville){
+  const key = normVille(ville);
+  if (!key || CITY_COORDS[key]) return CITY_COORDS[key] || null;
+  try{
+    const resp = await fetch(`https://nominatim.openstreetmap.org/search?format=json&limit=1&countrycodes=fr&q=${encodeURIComponent(ville+', France')}`);
+    const data = await resp.json();
+    if (data && data[0]){
+      const coord = {lat: parseFloat(data[0].lat), lng: parseFloat(data[0].lon)};
+      CITY_COORDS[key] = coord;
+      return coord;
+    }
+  }catch(e){ /* pas grave, on réessaiera plus tard */ }
+  return null;
+}
+
+async function geocodeMissingVilles(){
+  const btn = document.getElementById('btn-map-geocode');
+  const statusEl = document.getElementById('map-geocode-status');
+  const villes = [...new Set(items.filter(i=>!i.archived).map(i=>normVille(i.ville)).filter(Boolean))];
+  const missing = villes.filter(v=>!CITY_COORDS[v]);
+  if (!missing.length){ statusEl.textContent = 'Toutes les villes sont déjà localisées.'; return; }
+  btn.disabled = true;
+  for (let idx=0; idx<missing.length; idx++){
+    statusEl.textContent = `Localisation ${idx+1}/${missing.length} — ${missing[idx]}...`;
+    await geocodeOne(missing[idx]);
+    if (idx < missing.length-1) await new Promise(r=>setTimeout(r, 1100)); // respecte la limite de 1 requête/s du service gratuit
+  }
+  persistCityCoords();
+  statusEl.textContent = `${missing.length} ville(s) localisée(s).`;
+  btn.disabled = false;
+  renderDossiersMap();
+}
+document.getElementById('btn-map-geocode').addEventListener('click', geocodeMissingVilles);
+
+function statusMapColor(statut){
+  return {QUALIFIER:'#A83E68', 'PRE-PLANIFIER':'#C98A1A', PLANIFIER:'#E31E13', VALIDE:'#6E4FA3'}[statut] || '#5C6B7A';
+}
+
+function renderDossiersMap(){
+  const el = document.getElementById('dossiers-map');
+  if (!el || typeof L === 'undefined') return;
+  if (!dossiersMapInstance){
+    dossiersMapInstance = L.map('dossiers-map').setView([46.6, 2.3], 6); // centré France
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+      attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>',
+      maxZoom: 19
+    }).addTo(dossiersMapInstance);
+    dossiersMapMarkers = L.layerGroup().addTo(dossiersMapInstance);
+  }
+  dossiersMapMarkers.clearLayers();
+  const active = items.filter(i=>!i.archived);
+  let plotted = 0;
+  active.forEach(i=>{
+    const key = normVille(i.ville);
+    const coord = key ? CITY_COORDS[key] : null;
+    if (!coord) return;
+    plotted++;
+    const marker = L.circleMarker([coord.lat, coord.lng], {
+      radius: 8, color: '#fff', weight: 1.5, fillColor: statusMapColor(i.statut), fillOpacity: .9
+    });
+    marker.bindPopup(`<b>${i.nd||'(sans numéro)'}</b><br>${i.ville||''}<br>${i.statut||'—'}`);
+    marker.on('click', ()=> openDetail(i.id));
+    marker.addTo(dossiersMapMarkers);
+  });
+  document.getElementById('count-map').textContent = plotted + ' / ' + active.length;
+  setTimeout(()=>{ if (dossiersMapInstance) dossiersMapInstance.invalidateSize(); }, 150);
+}
+
+// ================= Tableaux de bord graphiques (Chart.js, gratuit) =================
+let chartInstances = {};
+function destroyChart(id){ if (chartInstances[id]){ chartInstances[id].destroy(); delete chartInstances[id]; } }
+
+function renderStatsCharts(){
+  if (typeof Chart === 'undefined') return;
+  renderChartDuree();
+  renderChartRetardVille();
+  renderChartClient();
+  renderChartEquipe();
+}
+
+function renderChartDuree(){
+  const ctx = document.getElementById('chart-duree'); if (!ctx) return;
+  const archived = items.filter(i=>i.archived && i.dateCreation && i.dateArchivage);
+  const byMonth = {};
+  archived.forEach(i=>{
+    const mois = (i.dateArchivage||'').slice(0,7);
+    const d = daysBetween(parseISO(i.dateCreation), parseISO(i.dateArchivage));
+    (byMonth[mois] = byMonth[mois]||[]).push(d);
+  });
+  const moisTries = Object.keys(byMonth).sort();
+  const moyennes = moisTries.map(m=>Math.round(byMonth[m].reduce((a,b)=>a+b,0)/byMonth[m].length));
+  destroyChart('duree');
+  chartInstances.duree = new Chart(ctx, {
+    type:'bar',
+    data:{ labels: moisTries.length?moisTries:['Aucun dossier clôturé'], datasets:[{label:'Jours (moyenne)', data: moisTries.length?moyennes:[0], backgroundColor:'#E31E13'}] },
+    options:{ responsive:true, plugins:{legend:{display:false}}, scales:{y:{beginAtZero:true}} }
+  });
+}
+
+function renderChartRetardVille(){
+  const ctx = document.getElementById('chart-retard-ville'); if (!ctx) return;
+  const dupIds = duplicateIds();
+  const byVille = {};
+  items.filter(i=>!i.archived).forEach(i=>{
+    if (analyse(i, dupIds).some(f=>f.type==='retard')){
+      const v = i.ville || 'Non renseignée';
+      byVille[v] = (byVille[v]||0)+1;
+    }
+  });
+  const entries = Object.entries(byVille).sort((a,b)=>b[1]-a[1]).slice(0,10);
+  destroyChart('retardVille');
+  chartInstances.retardVille = new Chart(ctx, {
+    type:'bar',
+    data:{ labels: entries.length?entries.map(e=>e[0]):['Aucun retard'], datasets:[{label:'Dossiers en retard', data: entries.length?entries.map(e=>e[1]):[0], backgroundColor:'#C98A1A'}] },
+    options:{ responsive:true, indexAxis:'y', plugins:{legend:{display:false}}, scales:{x:{beginAtZero:true, ticks:{stepSize:1}}} }
+  });
+}
+
+function renderChartClient(){
+  const ctx = document.getElementById('chart-client'); if (!ctx) return;
+  const byClient = {};
+  items.filter(i=>!i.archived).forEach(i=>{ const c = i.client || 'Non classé'; byClient[c] = (byClient[c]||0)+1; });
+  const labels = Object.keys(byClient), data = Object.values(byClient);
+  destroyChart('client');
+  chartInstances.client = new Chart(ctx, {
+    type:'doughnut',
+    data:{ labels: labels.length?labels:['Aucun dossier'], datasets:[{data: labels.length?data:[1], backgroundColor:['#16233F','#E31E13','#2F7D5C','#C98A1A','#6E4FA3','#A83E68','#5C6B7A']}] },
+    options:{ responsive:true }
+  });
+}
+
+function renderChartEquipe(){
+  const ctx = document.getElementById('chart-equipe'); if (!ctx) return;
+  const totals = {};
+  items.filter(i=>!i.archived && i.equipeId).forEach(i=>{
+    totals[i.equipeId] = (totals[i.equipeId]||0) + (parseInt(i.nbJoursTravail,10)||0);
+  });
+  const labels = teams.map(t=>t.name), data = teams.map(t=>totals[t.id]||0);
+  destroyChart('equipe');
+  chartInstances.equipe = new Chart(ctx, {
+    type:'bar',
+    data:{ labels: labels.length?labels:['Aucune équipe'], datasets:[{label:'Jours de chantier planifiés', data: labels.length?data:[0], backgroundColor:'#2F7D5C'}] },
+    options:{ responsive:true, plugins:{legend:{display:false}}, scales:{y:{beginAtZero:true}} }
+  });
+}
+
 function renderAll(){
   renderClientTabs();
   applyPlanningModeVisibility();
@@ -1754,6 +2143,14 @@ function renderAll(){
   renderDuplicates();
   renderArchive();
   renderPlanning();
+  renderVillesDatalist();
+  renderDossiersMap();
+  renderStatsCharts();
+}
+
+function renderVillesDatalist(){
+  const villes = [...new Set(items.map(i=>(i.ville||'').trim()).filter(Boolean))].sort((a,b)=>a.localeCompare(b,'fr'));
+  document.getElementById('villes-connues').innerHTML = villes.map(v=>`<option value="${v}">`).join("");
 }
 
 // ---- Interactions tableau principal ----
@@ -1915,7 +2312,7 @@ function openDetail(id){
           <option value="" ${item.client===''?'selected':''}>Non classé</option>
           ${CLIENTS.map(c=>`<option value="${c}" ${item.client===c?'selected':''}>${c}</option>`).join("")}
         </select></div>
-      <div class="field"><label>Ville</label><input data-f="ville" value="${item.ville||''}"></div>
+      <div class="field"><label>Ville</label><input data-f="ville" value="${item.ville||''}" list="villes-connues" autocomplete="off"></div>
       <div class="field"><label>Date cible</label><input type="date" data-f="dateCible" value="${item.dateCible||''}"></div>
       <label class="na-check"><input type="checkbox" id="no-pv-arrete" ${(item.prescriptionNA && item.arreteNA)?'checked':''}> Ce dossier n'a besoin ni de PV ni de demande d'arrêté → passe directement en Planifier</label>
       <div class="field"><label>Statut <span class="field-optional">(mis à jour automatiquement, modifiable si besoin)</span></label>
@@ -2097,9 +2494,9 @@ const wizardSteps = [
            {f:'ville', type:'text', label:'Ville', required:true, placeholder:'ex : BORDEAUX'},
            {f:'dateCible', type:'date', label:'Date cible'},
            {f:'statut', type:'select', label:'Statut', options:[['','—'],['QUALIFIER','Qualifier'],['PRE-PLANIFIER','Pré-planifier'],['PLANIFIER','Planifier'],['VALIDE','Validé']]}]},
-  {key:'prescription', label:'Étape 2 / 5', title:'Prescription (PV)', help:"L'alerte se déclenche 5 jours ouvrés (hors samedi/dimanche) après la création du dossier — ou la dernière relance loguée — si le PV n'est pas encore reçu, pour penser à le demander à l'entreprise. Les relances se rajoutent ensuite depuis la fiche du dossier.", naField:'prescriptionNA',
+  {key:'prescription', label:'Étape 2 / 5', title:'Prescription (PV)', help:"L'alerte se déclenche 15 jours après la création du dossier — ou la dernière relance loguée — si le PV n'est pas encore reçu, pour penser à le demander à l'entreprise. Les relances se rajoutent ensuite depuis la fiche du dossier.", naField:'prescriptionNA',
    fields:[{f:'prescriptionEnAttente', type:'checkbox', label:'En attente de prescription'}, {f:'prescriptionRecueLe', type:'date', label:'PV reçu le'}]},
-  {key:'arrete', label:'Étape 3 / 5', title:"Demande d'arrêté", help:"La relance automatique se déclenche 7 jours après la date d'envoi à la mairie (ou la dernière relance), si l'arrêté n'est pas encore reçu.", naField:'arreteNA',
+  {key:'arrete', label:'Étape 3 / 5', title:"Demande d'arrêté", help:"La relance automatique apparaît 1 semaine avant la date de début demandée à la mairie, tant que l'arrêté n'est pas encore reçu.", naField:'arreteNA',
    fields:[{f:'arreteStatut', type:'select', label:'Statut', options:[['','Rien'],['En attente','En attente'],['Envoyé','Envoyé']]},
            {f:'arreteEnvoyeLe', type:'date', label:'Envoyée le'},
            {f:'periodeDemandeeDebut', type:'date', label:'Dates demandées à la mairie — Du'},
@@ -2136,7 +2533,8 @@ function renderWizardStep(){
     if(fl.type==='select') return `<div class="field"><label>${fl.label}</label><select data-wf="${fl.f}">${fl.options.map(([o,l])=>`<option value="${o}" ${val===o?'selected':''}>${l}</option>`).join("")}</select></div>`;
     if(fl.type==='date') return `<div class="field"><label>${fl.label}${fl.required?'':' <span class="field-optional">(optionnel)</span>'}</label>
       <div class="date-row"><input data-wf="${fl.f}" type="date" value="${val}"><button type="button" class="btn-today" data-wf-today="${fl.f}">Aujourd'hui</button></div></div>`;
-    return `<div class="field"><label>${fl.label}${fl.required?'':' <span class="field-optional">(optionnel)</span>'}</label><input data-wf="${fl.f}" type="text" placeholder="${fl.placeholder||''}" value="${val}"></div>`;
+    const listAttr = fl.f === 'ville' ? ' list="villes-connues" autocomplete="off"' : '';
+    return `<div class="field"><label>${fl.label}${fl.required?'':' <span class="field-optional">(optionnel)</span>'}</label><input data-wf="${fl.f}" type="text" placeholder="${fl.placeholder||''}" value="${val}"${listAttr}></div>`;
   }).join("");
 
   document.getElementById('modal-body').innerHTML = `<div class="step-label">${step.label}</div><div class="step-title">${step.title}</div>
@@ -2233,7 +2631,7 @@ qsInput.addEventListener('input', ()=>{
     .slice(0, 15);
   qsResults.innerHTML = matches.length
     ? matches.map(i=>`<div class="qs-item" data-id="${i.id}">
-        <span><span class="qs-nd">${i.nd||'(sans numéro)'}</span> — ${i.ville||'ville non renseignée'}</span>
+        <span><span class="qs-nd">${i.nd||'(sans numéro)'}</span> — ${i.ville||'ville non renseignée'} ${badgeHtml(i.statut)}</span>
         <span class="qs-meta">${clientLabel(i.client)}${i.archived?' · archivé':''}<br>créé le ${i.dateCreation?fmtISO(parseISO(i.dateCreation)):'—'}</span>
       </div>`).join("")
     : `<div class="qs-empty">Aucun dossier ne correspond, dans aucun client.</div>`;
@@ -2260,6 +2658,9 @@ document.getElementById('backup-btn').addEventListener('click', ()=>{
     technicians: technicians,
     teamWeekAssignments: teamWeekAssignments,
     clients: CLIENTS,
+    clientInfo: CLIENT_INFO,
+    courrierTemplates: courrierTemplates,
+    cityCoords: CITY_COORDS,
   };
   const blob = new Blob([JSON.stringify(fullBackup, null, 2)], {type:'application/json'});
   const url = URL.createObjectURL(blob);
@@ -2299,6 +2700,9 @@ function restoreFromFile(file){
       try{ if (Array.isArray(data.technicians)){ technicians = data.technicians; persistTechnicians(); } }catch(e){ console.error(e); }
       try{ if (data.teamWeekAssignments && typeof data.teamWeekAssignments === 'object'){ teamWeekAssignments = data.teamWeekAssignments; persistTeamWeek(); } }catch(e){ console.error(e); }
       try{ if (Array.isArray(data.clients) && data.clients.length){ CLIENTS = data.clients; persistClients(); } }catch(e){ console.error(e); }
+      try{ if (data.clientInfo && typeof data.clientInfo === 'object'){ CLIENT_INFO = data.clientInfo; persistClientInfo(); renderEntreprisesList(); } }catch(e){ console.error(e); }
+      try{ if (data.courrierTemplates && typeof data.courrierTemplates === 'object'){ courrierTemplates = mergeCourrierTemplates(data.courrierTemplates); persistCourrierTemplates(); renderCourrierTemplatesTab(); } }catch(e){ console.error(e); }
+      try{ if (data.cityCoords && typeof data.cityCoords === 'object'){ CITY_COORDS = data.cityCoords; persistCityCoords(); } }catch(e){ console.error(e); }
     }
 
     loadFailedPermanently = false;
