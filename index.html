@@ -55,8 +55,6 @@
   .client-tab{background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.16);color:#C3D0E2;font-family:'Inter',sans-serif;font-weight:600;font-size:13px;padding:9px 16px;border-radius:6px;cursor:pointer;transition:.15s;}
   .client-tab:hover{background:rgba(255,255,255,.12);}
   .client-tab.active{background:var(--orange);border-color:var(--orange);color:#fff;}
-  .client-tab.planning-tab{border-color:rgba(255,255,255,.35);}
-  .client-tab.planning-tab.active{background:var(--navy-2);border-color:var(--navy-2);}
   .client-tab.add-client-tab{background:transparent;border-style:dashed;color:#A9B8CC;}
   .client-tab.add-client-tab:hover{color:#fff;border-color:#fff;}
   .client-tab .n{opacity:.75;font-weight:400;margin-left:4px;}
@@ -76,7 +74,7 @@
   .sync-dot{width:6px;height:6px;border-radius:50%;background:var(--green);animation:pulse 2s infinite;}
   @keyframes pulse{0%,100%{opacity:1;}50%{opacity:.35;}}
 
-  main{max-width:1240px;margin:0 auto;padding:26px 40px 60px;scroll-behavior:smooth;}
+  main{scroll-behavior:smooth;}
   section{margin-bottom:28px;}
   .section-head{display:flex;align-items:baseline;gap:10px;margin-bottom:9px;flex-wrap:wrap;}
   .section-head h2{font-family:'Barlow Condensed',sans-serif;font-size:18px;font-weight:600;text-transform:uppercase;letter-spacing:.02em;margin:0;color:var(--navy);}
@@ -345,6 +343,36 @@
   .courrier-tpl-hint{font-size:11px;color:var(--slate-light);margin:-4px 0 10px;}
   .param-subtab.active{background:var(--navy-2);color:#fff;border-color:var(--navy-2);}
   .stats-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(420px,1fr));gap:14px;}
+
+  /* ---- Menu latéral / navigation par pages ---- */
+  .app-shell{display:flex;align-items:flex-start;max-width:1240px;margin:0 auto;}
+  .sidebar{position:sticky;top:0;align-self:flex-start;width:224px;flex:0 0 224px;background:var(--navy);color:#EAF0F8;min-height:calc(100vh - 1px);padding:18px 0;box-sizing:border-box;display:flex;flex-direction:column;justify-content:space-between;}
+  .sidebar-nav{display:flex;flex-direction:column;gap:2px;padding:0 12px;}
+  .sb-link, .sb-parent{display:flex;align-items:center;gap:9px;width:100%;text-align:left;background:none;border:none;color:#C3D0E2;font-family:'Inter',sans-serif;font-weight:600;font-size:13px;padding:10px 12px;border-radius:7px;cursor:pointer;}
+  .sb-link:hover, .sb-parent:hover{background:rgba(255,255,255,.08);color:#fff;}
+  .sb-link.active{background:var(--orange);color:#fff;}
+  .sb-children{display:none;flex-direction:column;gap:2px;margin:2px 0 4px;}
+  .sb-children.open{display:flex;}
+  .sb-children .sb-link{padding-left:30px;font-weight:500;font-size:12.5px;}
+  .sb-caret{margin-left:auto;font-size:10px;transition:transform .15s;}
+  .sb-parent.open .sb-caret{transform:rotate(180deg);}
+  .sidebar-foot{display:flex;flex-direction:column;gap:6px;padding:10px 12px 0;border-top:1px solid rgba(255,255,255,.12);margin-top:10px;}
+  .sidebar-foot .backup-btn{width:100%;text-align:left;}
+  .app-main{flex:1;min-width:0;padding:26px 32px 60px;}
+  .app-page{display:none;}
+  .app-page.active{display:block;}
+  .sidebar-toggle{display:none;}
+  .sidebar-backdrop{display:none;position:fixed;inset:0;background:rgba(15,22,40,.5);z-index:3500;}
+  .sidebar-backdrop.show{display:block;}
+  #sync-status-hero{display:flex;align-items:center;gap:6px;font-family:'IBM Plex Mono',monospace;font-size:10.5px;color:#A9B8CC;margin-top:10px;}
+  .qf-chip.active{background:var(--navy-2);color:#fff;border-color:var(--navy-2);}
+  @media (max-width:900px){
+    .app-shell{display:block;}
+    .sidebar{position:fixed;top:0;left:0;bottom:0;z-index:4000;transform:translateX(-100%);transition:transform .2s ease;width:250px;min-height:100vh;}
+    .sidebar.open{transform:translateX(0);box-shadow:0 0 30px rgba(0,0,0,.35);}
+    .sidebar-toggle{display:flex;align-items:center;gap:6px;position:sticky;top:8px;left:16px;z-index:200;background:var(--navy);color:#fff;border:none;border-radius:7px;padding:9px 14px;font-size:13px;font-weight:700;cursor:pointer;margin:12px 0 0 16px;}
+    .app-main{padding:16px;}
+  }
   .stats-card{background:var(--white);border:1px solid var(--line);border-radius:8px;padding:14px 16px;}
   .stats-card h4{font-family:'Barlow Condensed',sans-serif;font-size:14px;text-transform:uppercase;letter-spacing:.03em;color:var(--navy);margin:0 0 10px;}
   .stats-card canvas{max-height:260px;}
@@ -392,32 +420,51 @@
       <input type="text" id="quick-search" placeholder="🔎 Recherche urgente — n° dossier ou ville, tous clients" autocomplete="off">
       <div class="quick-search-results" id="quick-search-results"></div>
     </div>
-    <div style="display:flex;flex-direction:column;align-items:flex-end;gap:7px;">
-      <button class="backup-btn" id="btn-open-parametres" type="button">⚙️ Paramètres</button>
-      <div class="hero-date"><b id="today-label"></b><span>Mis à jour en direct</span></div>
-    </div>
+    <div class="hero-date"><b id="today-label"></b><span>Mis à jour en direct</span></div>
   </div>
   <div class="kpi-row" id="kpi-row"></div>
   <div class="client-tabs" id="client-tabs"></div>
+  <span class="sync-status" id="sync-status-hero"><span class="sync-dot"></span><span id="sync-label">Partagé — synchro en direct</span></span>
 </div>
 
-<nav class="tab-nav">
-  <div class="tab-nav-inner" id="tab-nav-inner">
-    <button class="tab-btn" data-statut-filter="QUALIFIER">Qualifié</button>
-    <button class="tab-btn" data-statut-filter="PRE-PLANIFIER">Pré-planifié</button>
-    <button class="tab-btn" data-statut-filter="PLANIFIER">Planifié</button>
-    <button class="tab-btn" data-statut-filter="VALIDE">Validé</button>
-    <button class="tab-btn" data-target="relances-section">Relance</button>
-    <button class="tab-btn" data-target="alerts-duplicate-section">Doublons</button>
-    <button class="tab-btn" data-statut-filter="">En cours</button>
-    <button class="tab-btn" data-target="archive-section">Archives</button>
-    <button class="tab-btn" data-target="map-section">🗺️ Carte</button>
-    <button class="tab-btn" data-target="stats-section">📊 Statistiques</button>
-    <span class="sync-status"><span class="sync-dot"></span><span id="sync-label">Partagé — synchro en direct</span></span>
-  </div>
-</nav>
+<button class="sidebar-toggle" id="sidebar-toggle" type="button" aria-label="Ouvrir le menu">☰ Menu</button>
+<div class="sidebar-backdrop" id="sidebar-backdrop"></div>
 
-<main>
+<div class="app-shell">
+  <aside class="sidebar" id="sidebar">
+    <nav class="sidebar-nav">
+      <button class="sb-link active" data-page="page-dashboard">🏠 Tableau de bord</button>
+
+      <div class="sb-group">
+        <button type="button" class="sb-parent open" data-toggle-group="dossiers">📁 Dossiers<span class="sb-caret">▾</span></button>
+        <div class="sb-children open" id="sb-group-dossiers">
+          <button class="sb-link" data-page="table-section">📋 Tous les dossiers</button>
+          <button class="sb-link" data-page="page-anomalies">⚠️ Anomalies &amp; doublons</button>
+          <button class="sb-link" data-page="archive-section">🗄️ Archives</button>
+        </div>
+      </div>
+
+      <button class="sb-link" data-page="planning-section">📅 Planning</button>
+      <button class="sb-link" data-page="map-section">🗺️ Carte</button>
+      <button class="sb-link" data-page="stats-section">📊 Statistiques</button>
+
+      <div class="sb-group">
+        <button type="button" class="sb-parent" data-toggle-group="parametres">⚙️ Paramètres<span class="sb-caret">▾</span></button>
+        <div class="sb-children" id="sb-group-parametres">
+          <button class="sb-link" data-page="parametres-section" data-param-subtab="courriers">✉️ Courriers</button>
+          <button class="sb-link" data-page="parametres-section" data-param-subtab="entreprises">🏢 Entreprises</button>
+        </div>
+      </div>
+    </nav>
+    <div class="sidebar-foot">
+      <button class="backup-btn" id="backup-btn-side" type="button">💾 Sauvegarder une copie</button>
+      <button class="backup-btn" id="restore-btn-side" type="button">📂 Restaurer une copie</button>
+    </div>
+  </aside>
+
+<main class="app-main" id="app-main">
+
+  <div class="app-page active" id="page-dashboard">
 
   <div class="cta-create" id="cta-create">
     <div class="plus">+</div>
@@ -458,8 +505,17 @@
     </div>
   </section>
 
-  <section id="table-section">
+  </div><!-- /page-dashboard -->
+
+  <section id="table-section" class="app-page">
     <div class="section-head"><h2>Dossiers en cours</h2><span class="count" id="count-total">0</span></div>
+    <div class="toolbar" id="qf-chips">
+      <button type="button" class="btn-secondary qf-chip active" data-statut-filter="">Tous</button>
+      <button type="button" class="btn-secondary qf-chip" data-statut-filter="QUALIFIER">Qualifié</button>
+      <button type="button" class="btn-secondary qf-chip" data-statut-filter="PRE-PLANIFIER">Pré-planifié</button>
+      <button type="button" class="btn-secondary qf-chip" data-statut-filter="PLANIFIER">Planifié</button>
+      <button type="button" class="btn-secondary qf-chip" data-statut-filter="VALIDE">Validé</button>
+    </div>
     <p class="section-sub">Clique sur un dossier pour l'ouvrir et le modifier. Passe l'attachement à « Fait » pour l'archiver.</p>
 
     <div class="table-controls">
@@ -501,6 +557,8 @@
     </div>
   </section>
 
+  <div class="app-page" id="page-anomalies">
+
   <section id="alerts-anomaly-section">
     <div class="section-head"><h2>Anomalies à vérifier</h2><span class="count" id="count-anomaly">0</span></div>
     <p class="section-sub">Dates incohérentes ou statut manquant.</p>
@@ -513,7 +571,9 @@
     <div class="alert-grid" id="alerts-duplicate"></div>
   </section>
 
-  <section id="planning-section">
+  </div><!-- /page-anomalies -->
+
+  <section id="planning-section" class="app-page">
     <p class="section-sub">Tous clients mélangés (INEO PRAXEDO, CONSTRUCTEL, KRAAFT). Basé sur la date des travaux (dates indiquées sur l'arrêté, sinon date cible). Glisse une pastille d'un jour/équipe à l'autre pour la déplacer.</p>
 
     <h3 class="subsection-title">Vue 4 semaines — dossiers Pré-planifiés &amp; Planifiés</h3>
@@ -533,7 +593,7 @@
     </div>
   </section>
 
-  <section id="archive-section">
+  <section id="archive-section" class="app-page">
     <div class="section-head"><h2>Archives</h2><span class="count" id="count-archive">0</span></div>
     <p class="section-sub">Dossiers clôturés — temps de traitement du dossier, de la création à la clôture.</p>
     <div class="table-wrap">
@@ -544,7 +604,7 @@
     </div>
   </section>
 
-  <section id="map-section">
+  <section id="map-section" class="app-page">
     <div class="section-head"><h2>🗺️ Carte des dossiers</h2><span class="count" id="count-map">0</span></div>
     <p class="section-sub">Tous les dossiers en cours, positionnés par ville et colorés selon leur statut. Clique sur un point pour ouvrir le dossier. Fond de carte OpenStreetMap — gratuit, sans clé Google Maps.</p>
     <div class="toolbar">
@@ -558,7 +618,7 @@
     <div id="dossiers-map" style="height:520px;border:1px solid var(--line);border-radius:6px;background:var(--line-soft);"></div>
   </section>
 
-  <section id="stats-section">
+  <section id="stats-section" class="app-page">
     <div class="section-head"><h2>📊 Tableaux de bord</h2></div>
     <p class="section-sub">Vue d'ensemble pour les bilans — temps de traitement, retards, charge par équipe.</p>
     <div class="stats-grid">
@@ -581,7 +641,7 @@
     </div>
   </section>
 
-  <section id="parametres-section">
+  <section id="parametres-section" class="app-page">
     <div class="section-head"><h2>⚙️ Paramètres</h2></div>
     <div class="toolbar">
       <button type="button" class="btn-secondary param-subtab active" data-param-tab="courriers">✉️ Courriers</button>
@@ -614,6 +674,7 @@
   </section>
 
 </main>
+</div><!-- /app-shell -->
 
 <footer>Vos saisies sont enregistrées automatiquement dans cet espace de travail (visibles par vous seul).</footer>
 
@@ -1049,7 +1110,6 @@ function startSync(){
 const CLIENTS_KEY = "clients_v1";
 let CLIENTS = ['INEO PRAXEDO','INEO KRAAFT','CONSTRUCTEL'];
 let activeClient = ''; // '' = Non classé, au premier chargement, pour ne rien cacher
-let planningMode = false; // true = affiche l'onglet Planning à la place des dossiers
 
 async function loadClients(){
   try{
@@ -1165,11 +1225,6 @@ document.querySelectorAll('.param-subtab').forEach(btn=>{
     if (tab === 'entreprises') renderEntreprisesList();
   });
 });
-document.getElementById('btn-open-parametres').addEventListener('click', ()=>{
-  const target = document.getElementById('parametres-section');
-  const y = target.getBoundingClientRect().top + window.scrollY - 56;
-  window.scrollTo({top:y, behavior:'smooth'});
-});
 
 // ================= Modèles de courrier (éditables) =================
 const COURRIER_TEMPLATES_KEY = "courrier_templates_v1";
@@ -1255,13 +1310,12 @@ function renderClientTabs(){
   const clientTabsHtml = tabs.map(c=>{
     const label = c || 'Non classé';
     const n = items.filter(i=>(i.client||'')===c).length;
-    return `<button class="client-tab ${!planningMode && c===activeClient?'active':''}" data-client="${c}">${label}<span class="n">${n}</span></button>`;
+    return `<button class="client-tab ${c===activeClient?'active':''}" data-client="${c}">${label}<span class="n">${n}</span></button>`;
   }).join("");
-  const planningTab = `<button class="client-tab planning-tab ${planningMode?'active':''}" data-planning="1">📅 Planning</button>`;
   const addTab = addClientOpen
     ? `<span class="add-client-form"><input type="text" id="new-client-name" placeholder="Nom de l'entreprise..." autofocus><button type="button" class="btn-mini" id="btn-add-client-confirm">Ajouter</button></span>`
     : `<button class="client-tab add-client-tab" id="btn-add-client" title="Ajouter une nouvelle entreprise">+ Entreprise</button>`;
-  document.getElementById('client-tabs').innerHTML = clientTabsHtml + planningTab + addTab;
+  document.getElementById('client-tabs').innerHTML = clientTabsHtml + addTab;
   if (addClientOpen){
     const input = document.getElementById('new-client-name');
     input.focus();
@@ -1270,7 +1324,7 @@ function renderClientTabs(){
       if (name){
         const clean = name.toUpperCase();
         if (!CLIENTS.includes(clean)){ CLIENTS.push(clean); persistClients(); }
-        activeClient = clean; planningMode = false;
+        activeClient = clean;
       }
       addClientOpen = false;
       renderAll();
@@ -1283,23 +1337,10 @@ document.getElementById('client-tabs').addEventListener('click', (e)=>{
   const addBtn = e.target.closest('#btn-add-client');
   if (addBtn){ addClientOpen = true; renderAll(); return; }
   if (e.target.closest('#btn-add-client-confirm') || e.target.closest('.add-client-form')) return;
-  const planningBtn = e.target.closest('.planning-tab');
-  if (planningBtn){ planningMode = true; renderAll(); return; }
   const btn = e.target.closest('.client-tab[data-client]'); if(!btn) return;
-  activeClient = btn.dataset.client; planningMode = false;
+  activeClient = btn.dataset.client;
   renderAll();
 });
-
-function applyPlanningModeVisibility(){
-  const dossierSectionIds = ['today-banner','relances-section','alerts-retard-section','upcoming-section',
-    'table-section','alerts-anomaly-section','alerts-duplicate-section','archive-section'];
-  dossierSectionIds.forEach(id=>{
-    const el = document.getElementById(id);
-    if (el) el.style.display = planningMode ? 'none' : '';
-  });
-  const planningEl = document.getElementById('planning-section');
-  if (planningEl) planningEl.style.display = planningMode ? '' : 'none';
-}
 
 function findDuplicateGroups(){
   const map = {};
@@ -2161,7 +2202,6 @@ function renderChartEquipe(){
 
 function renderAll(){
   renderClientTabs();
-  applyPlanningModeVisibility();
   const computed = computeAll();
   renderKPIs(computed);
   renderTodayBanner(computed);
@@ -2632,24 +2672,54 @@ function finishWizard(){
   persist(); closeWizard(); renderAll();
 }
 
-document.getElementById('tab-nav-inner').addEventListener('click', (e)=>{
-  const btn = e.target.closest('.tab-btn'); if(!btn) return;
-  document.querySelectorAll('.tab-btn').forEach(b=>b.classList.remove('active'));
-  btn.classList.add('active');
+// ================= Navigation par menu latéral (pages) =================
+function showPage(pageId){
+  document.querySelectorAll('.app-page').forEach(p=>p.classList.remove('active'));
+  const target = document.getElementById(pageId);
+  if (target) target.classList.add('active');
+  document.querySelectorAll('.sb-link').forEach(b=>b.classList.toggle('active', b.dataset.page===pageId));
+  document.getElementById('app-main').scrollTo({top:0});
+  window.scrollTo({top:0, behavior:'auto'});
+  if (pageId === 'map-section'){ renderDossiersMap(); }
+  if (pageId === 'stats-section'){ renderStatsCharts(); }
+  closeSidebarMobile();
+}
 
-  if (btn.dataset.statutFilter !== undefined){
-    document.getElementById('filter-statut').value = btn.dataset.statutFilter;
-    renderTable(computeAll());
-    const target = document.getElementById('table-section');
-    const y = target.getBoundingClientRect().top + window.scrollY - 56;
-    window.scrollTo({top:y, behavior:'smooth'});
-    return;
-  }
-  const target = document.getElementById(btn.dataset.target);
-  if(target){
-    const y = target.getBoundingClientRect().top + window.scrollY - 56;
-    window.scrollTo({top:y, behavior:'smooth'});
-  }
+document.querySelectorAll('.sb-link').forEach(btn=>{
+  btn.addEventListener('click', ()=>{
+    showPage(btn.dataset.page);
+    if (btn.dataset.paramSubtab){
+      const sub = document.querySelector(`.param-subtab[data-param-tab="${btn.dataset.paramSubtab}"]`);
+      if (sub) sub.click();
+    }
+  });
+});
+document.querySelectorAll('.sb-parent').forEach(btn=>{
+  btn.addEventListener('click', ()=>{
+    const key = btn.dataset.toggleGroup;
+    const group = document.getElementById('sb-group-'+key);
+    const isOpen = group.classList.toggle('open');
+    btn.classList.toggle('open', isOpen);
+  });
+});
+
+// menu mobile (hamburger)
+function openSidebarMobile(){ document.getElementById('sidebar').classList.add('open'); document.getElementById('sidebar-backdrop').classList.add('show'); }
+function closeSidebarMobile(){ document.getElementById('sidebar').classList.remove('open'); document.getElementById('sidebar-backdrop').classList.remove('show'); }
+document.getElementById('sidebar-toggle').addEventListener('click', openSidebarMobile);
+document.getElementById('sidebar-backdrop').addEventListener('click', closeSidebarMobile);
+
+// raccourcis de sauvegarde dans le menu latéral (déclenchent les mêmes actions que les boutons du bandeau)
+document.getElementById('backup-btn-side').addEventListener('click', ()=> document.getElementById('backup-btn').click());
+document.getElementById('restore-btn-side').addEventListener('click', ()=> document.getElementById('restore-btn').click());
+
+// filtres rapides par statut sur la page "Tous les dossiers"
+document.getElementById('qf-chips').addEventListener('click', (e)=>{
+  const btn = e.target.closest('.qf-chip'); if (!btn) return;
+  document.querySelectorAll('.qf-chip').forEach(b=>b.classList.remove('active'));
+  btn.classList.add('active');
+  document.getElementById('filter-statut').value = btn.dataset.statutFilter;
+  renderTable(computeAll());
 });
 
 // ================= Recherche rapide (tous clients, urgence) =================
